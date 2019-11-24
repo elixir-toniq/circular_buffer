@@ -9,10 +9,16 @@ defmodule CircularBuffer do
   ```
   """
 
+  @doc """
+  Creates a new circular buffer with a given size.
+  """
   def new(size) when is_integer(size) and size > 0 do
     %{q: :queue.new(), max_size: size, count: 0}
   end
 
+  @doc """
+  Inserts a new item into the next location of the circular buffer
+  """
   def insert(cb, item) do
     if cb.count < cb.max_size do
       %{cb | q: :queue.cons(item, cb.q), count: cb.count + 1}
@@ -26,12 +32,19 @@ defmodule CircularBuffer do
     end
   end
 
+  @doc """
+  Converts a circular buffer to a list. The list is ordered from oldest to newest
+  elements based on their insertion order.
+  """
   def to_list(cb) do
     cb.q
     |> :queue.reverse
     |> :queue.to_list
   end
 
+  @doc """
+  Returns the newest element in the buffer
+  """
   def newest(cb) do
     case :queue.peek(cb.q) do
       {_, val} -> val
@@ -39,6 +52,9 @@ defmodule CircularBuffer do
     end
   end
 
+  @doc """
+  Returns the oldest element in the buffer
+  """
   def oldest(cb) do
     case :queue.peek_r(cb.q) do
       {_, val} -> val
