@@ -107,6 +107,11 @@ defmodule CircularBufferTest do
     end
   end
 
+  test "can be inspected" do
+    str = inspect(Enum.into([1,2,3,4], CB.new(4)))
+    assert str == "#CircularBuffer<[1, 2, 3, 4]>"
+  end
+
   def size_and_list do
     let size <- pos_integer() do
       let is <- ints(size*2, []) do

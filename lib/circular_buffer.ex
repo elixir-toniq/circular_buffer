@@ -102,4 +102,12 @@ defmodule CircularBuffer do
       {original, collector_fn}
     end
   end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(cb, opts) do
+      concat(["#CircularBuffer<", to_doc(CB.to_list(cb), opts), ">"])
+    end
+  end
 end
