@@ -26,6 +26,29 @@ defmodule CircularBufferTest do
     end
   end
 
+  property "can tell the current number of elements" do
+    forall {size, is} <- {pos_integer(), list(integer())} do
+      buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
+      Enum.count(buffer) == min(size, length(is))
+    end
+  end
+
+  property "member?/1" do
+    items = such_that({a, b} <- {pos_integer(), pos_integer()}, when: a != b)
+    forall {a, b} <- items do
+      cb = CB.new(1) |> CB.insert(a)
+      !Enum.member?(cb, b) && Enum.member?(cb, a)
+    end
+  end
+
+  property "implements Enumerable" do
+    forall is <- list(integer()) do
+      buffer = Enum.reduce(is, CB.new(length(is)+1), fn i, cb -> CB.insert(cb, i) end)
+
+      Enum.reduce(buffer, 0, fn acc, i -> acc + i end) == Enum.sum(is)
+    end
+  end
+
   property "the number of elements never exceeds the size of the buffer" do
     forall {size, is} <- size_and_list() do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
