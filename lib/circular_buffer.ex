@@ -90,4 +90,16 @@ defmodule CircularBuffer do
       {:ok, cb.count, &Enumerable.List.slice(CB.to_list(cb), &1, &2)}
     end
   end
+
+  defimpl Collectable do
+    def into(original) do
+      collector_fn = fn
+        cb, {:cont, elem} -> CB.insert(cb, elem)
+        cb, :done -> cb
+        _cb, :halt -> :ok
+      end
+
+      {original, collector_fn}
+    end
+  end
 end

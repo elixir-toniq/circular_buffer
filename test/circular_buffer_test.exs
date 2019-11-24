@@ -49,6 +49,14 @@ defmodule CircularBufferTest do
     end
   end
 
+  property "can be collected" do
+    forall {size, is} <- size_and_list() do
+      buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
+
+      Enum.into(is, CB.new(size)) == buffer
+    end
+  end
+
   property "the number of elements never exceeds the size of the buffer" do
     forall {size, is} <- size_and_list() do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
