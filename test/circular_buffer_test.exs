@@ -112,6 +112,37 @@ defmodule CircularBufferTest do
     assert str == "#CircularBuffer<[1, 2, 3, 4]>"
   end
 
+  test "Enum.slice" do
+    # Verify Elixir's Enum.slice tests for lists work
+    cb = Enum.into([-2, -1, 0, 1, 2, 3, 4, 5], CB.new(5))
+    assert Enum.slice(cb, 0..0) == [1]
+    assert Enum.slice(cb, 0..1) == [1, 2]
+    assert Enum.slice(cb, 0..2) == [1, 2, 3]
+    assert Enum.slice(cb, 1, 2) == [2, 3]
+    assert Enum.slice(cb, 1, 0) == []
+    assert Enum.slice(cb, 2, 5) == [3, 4, 5]
+    assert Enum.slice(cb, 2, 6) == [3, 4, 5]
+    assert Enum.slice(cb, 5, 5) == []
+    assert Enum.slice(cb, 6, 5) == []
+    assert Enum.slice(cb, 6, 0) == []
+    assert Enum.slice(cb, -6, 0) == []
+    assert Enum.slice(cb, -6, 5) == []
+    assert Enum.slice(cb, -2, 5) == [4, 5]
+    assert Enum.slice(cb, -3, 1) == [3]
+
+    assert_raise FunctionClauseError, fn ->
+      Enum.slice(cb, 0, -1)
+    end
+
+    assert_raise FunctionClauseError, fn ->
+      Enum.slice(cb, 0.99, 0)
+    end
+
+    assert_raise FunctionClauseError, fn ->
+      Enum.slice(cb, 0, 0.99)
+    end
+  end
+
   def size_and_list do
     let size <- pos_integer() do
       let is <- ints(size*2, []) do
