@@ -86,8 +86,8 @@ defmodule CircularBuffer do
       Enumerable.List.reduce(CB.to_list(cb), acc, fun)
     end
 
-    def slice(cb) do
-      {:ok, cb.count, &Enumerable.List.slice(CB.to_list(cb), &1, &2)}
+    def slice(_cb) do
+      {:error, __MODULE__}
     end
   end
 
