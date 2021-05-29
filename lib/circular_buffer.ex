@@ -14,12 +14,15 @@ defmodule CircularBuffer do
   """
 
   defstruct [:a, :b, :max_size, :count]
+  @typedoc "A circular buffer"
+  @opaque t() :: %__MODULE__{a: list(), b: list(), max_size: pos_integer(), count: non_neg_integer()}
 
   alias __MODULE__, as: CB
 
   @doc """
   Creates a new circular buffer with a given size.
   """
+  @spec new(pos_integer()) :: t()
   def new(size) when is_integer(size) and size > 0 do
     %CB{a: [], b: [], max_size: size, count: 0}
   end
@@ -27,6 +30,7 @@ defmodule CircularBuffer do
   @doc """
   Inserts a new item into the next location of the circular buffer
   """
+  @spec insert(t(), any()) :: t()
   def insert(%CB{b: b} = cb, item) when b != [] do
     %CB{cb | a: [item | cb.a], b: tl(b)}
   end
@@ -44,6 +48,7 @@ defmodule CircularBuffer do
   Converts a circular buffer to a list. The list is ordered from oldest to newest
   elements based on their insertion order.
   """
+  @spec to_list(t()) :: list()
   def to_list(%CB{} = cb) do
     cb.b ++ Enum.reverse(cb.a)
   end
@@ -51,18 +56,21 @@ defmodule CircularBuffer do
   @doc """
   Returns the newest element in the buffer
   """
+  @spec newest(t()) :: any()
   def newest(%CB{a: [newest | _rest]}), do: newest
   def newest(%CB{b: []}), do: nil
 
   @doc """
   Returns the oldest element in the buffer
   """
+  @spec oldest(t()) :: any()
   def oldest(%CB{b: [oldest | _rest]}), do: oldest
   def oldest(%CB{a: a}), do: List.last(a)
 
   @doc """
   Checks the buffer to see if its empty
   """
+  @spec empty?(t()) :: boolean()
   def empty?(%CB{} = cb) do
     cb.count == 0
   end

@@ -14,7 +14,8 @@ defmodule CircularBuffer.MixProject do
       package: package(),
       name: "CircularBuffer",
       source_url: "https://github.com/keathley/circular_buffer",
-      docs: docs()
+      docs: docs(),
+      dialyzer: dialyzer()
     ]
   end
 
@@ -29,7 +30,8 @@ defmodule CircularBuffer.MixProject do
   defp deps do
     [
       {:propcheck, "~> 1.2", only: [:dev, :test]},
-      {:ex_doc, "~> 0.19", only: [:dev, :test]}
+      {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.1.0", only: :dev, runtime: false}
     ]
   end
 
@@ -52,6 +54,12 @@ defmodule CircularBuffer.MixProject do
       source_ref: "v#{@version}",
       source_url: "https://github.com/keathley/circular_buffer",
       main: "CircularBuffer"
+    ]
+  end
+
+  defp dialyzer() do
+    [
+      flags: [:race_conditions, :unmatched_returns, :error_handling]
     ]
   end
 end
