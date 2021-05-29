@@ -19,10 +19,14 @@ defmodule CircularBufferTest do
     end
   end
 
+  def slow_cb_count(cb) do
+    Enum.count(cb.a) + Enum.count(cb.b)
+  end
+
   property "the count matches the number of elements in the buffer" do
     forall {size, is} <- {pos_integer(), list(integer())} do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
-      :queue.len(buffer.q) == buffer.count
+      slow_cb_count(buffer) == buffer.count
     end
   end
 
@@ -60,7 +64,7 @@ defmodule CircularBufferTest do
   property "the number of elements never exceeds the size of the buffer" do
     forall {size, is} <- size_and_list() do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
-      :queue.len(buffer.q) <= size
+      slow_cb_count(buffer) <= size
     end
   end
 
@@ -74,10 +78,9 @@ defmodule CircularBufferTest do
 
       slice =
         iis
-        |> Enum.reverse
-        |> Enum.take(size)
+        |> Enum.take(-size)
 
-      :queue.to_list(buffer.q) == slice
+      CB.to_list(buffer) == slice
     end
   end
 

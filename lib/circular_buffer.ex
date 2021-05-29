@@ -1,15 +1,19 @@
 defmodule CircularBuffer do
   @moduledoc """
-  Circular Buffer built around erlang's queue module.
+  Circular Buffer
 
   When creating a circular buffer you must specify the max size:
 
   ```
   cb = CircularBuffer.new(10)
   ```
+
+  CircularBuffers are implemented as Okasaki queues like Erlang's `:queue`
+  module, but with additional optimizations thanks to the reduced set
+  of operations.
   """
 
-  defstruct [:q, :max_size, :count]
+  defstruct [:a, :b, :max_size, :count]
 
   alias __MODULE__, as: CB
 
@@ -17,60 +21,50 @@ defmodule CircularBuffer do
   Creates a new circular buffer with a given size.
   """
   def new(size) when is_integer(size) and size > 0 do
-    %CB{q: :queue.new(), max_size: size, count: 0}
+    %CB{a: [], b: [], max_size: size, count: 0}
   end
 
   @doc """
   Inserts a new item into the next location of the circular buffer
   """
-  def insert(%CB{}=cb, item) do
-    if cb.count < cb.max_size do
-      %{cb | q: :queue.cons(item, cb.q), count: cb.count + 1}
-    else
-      new_q =
-        cb.q
-        |> :queue.drop_r
-        |> (fn q -> :queue.cons(item, q) end).()
+  def insert(%CB{b: b} = cb, item) when b != [] do
+    %CB{cb | a: [item | cb.a], b: tl(b)}
+  end
 
-      %CB{cb | q: new_q}
+  def insert(%CB{count: count, max_size: max_size} = cb, item) when count < max_size do
+    %CB{cb | a: [item | cb.a], count: cb.count + 1}
     end
+
+  def insert(%CB{b: []} = cb, item) do
+    new_b = cb.a |> Enum.reverse() |> tl()
+    %CB{cb | a: [item], b: new_b}
   end
 
   @doc """
   Converts a circular buffer to a list. The list is ordered from oldest to newest
   elements based on their insertion order.
   """
-  def to_list(%CB{}=cb) do
-    cb.q
-    |> :queue.reverse
-    |> :queue.to_list
+  def to_list(%CB{} = cb) do
+    cb.b ++ Enum.reverse(cb.a)
   end
 
   @doc """
   Returns the newest element in the buffer
   """
-  def newest(%CB{}=cb) do
-    case :queue.peek(cb.q) do
-      {_, val} -> val
-      :empty -> nil
-    end
-  end
+  def newest(%CB{a: [newest | _rest]}), do: newest
+  def newest(%CB{b: []}), do: nil
 
   @doc """
   Returns the oldest element in the buffer
   """
-  def oldest(%CB{}=cb) do
-    case :queue.peek_r(cb.q) do
-      {_, val} -> val
-      :empty -> nil
-    end
-  end
+  def oldest(%CB{b: [oldest | _rest]}), do: oldest
+  def oldest(%CB{a: a}), do: List.last(a)
 
   @doc """
   Checks the buffer to see if its empty
   """
-  def empty?(%CB{}=cb) do
-    :queue.is_empty(cb.q)
+  def empty?(%CB{} = cb) do
+    cb.count == 0
   end
 
   defimpl Enumerable do
@@ -79,7 +73,7 @@ defmodule CircularBuffer do
     end
 
     def member?(cb, element) do
-      {:ok, :queue.member(element, cb.q)}
+      {:ok, Enum.member?(cb.a, element) or Enum.member?(cb.b, element)}
     end
 
     def reduce(cb, acc, fun) do
