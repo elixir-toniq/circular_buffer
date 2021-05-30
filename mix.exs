@@ -28,8 +28,9 @@ defmodule CircularBuffer.MixProject do
   defp deps do
     [
       {:propcheck, "~> 1.2", only: [:dev, :test]},
+      {:credo, "~> 1.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.1.0", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false}
     ]
   end
 
