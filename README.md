@@ -9,7 +9,7 @@ Docs: [https://hexdocs.pm/circular_buffer](https://hexdocs.pm/circular_buffer).
 ```elixir
 def deps do
   [
-    {:circular_buffer, "~> 0.3"}
+    {:circular_buffer, "~> 0.4"}
   ]
 end
 ```
