@@ -1,6 +1,7 @@
 defmodule CircularBufferTest do
   use ExUnit.Case, async: false
   use PropCheck
+  doctest CircularBuffer
 
   alias CircularBuffer, as: CB
 
@@ -39,6 +40,7 @@ defmodule CircularBufferTest do
 
   property "member?/1" do
     items = such_that({a, b} <- {pos_integer(), pos_integer()}, when: a != b)
+
     forall {a, b} <- items do
       cb = CB.new(1) |> CB.insert(a)
       !Enum.member?(cb, b) && Enum.member?(cb, a)
@@ -47,7 +49,7 @@ defmodule CircularBufferTest do
 
   property "implements Enumerable" do
     forall is <- list(integer()) do
-      buffer = Enum.reduce(is, CB.new(length(is)+1), fn i, cb -> CB.insert(cb, i) end)
+      buffer = Enum.reduce(is, CB.new(length(is) + 1), fn i, cb -> CB.insert(cb, i) end)
 
       Enum.reduce(buffer, 0, fn acc, i -> acc + i end) == Enum.sum(is)
     end
@@ -103,7 +105,7 @@ defmodule CircularBufferTest do
       oldest =
         iis
         |> Enum.reverse()
-        |> Enum.drop(size-1)
+        |> Enum.drop(size - 1)
         |> Enum.at(0)
 
       CB.oldest(buffer) == oldest
@@ -111,7 +113,7 @@ defmodule CircularBufferTest do
   end
 
   test "can be inspected" do
-    str = inspect(Enum.into([1,2,3,4], CB.new(4)))
+    str = inspect(Enum.into([1, 2, 3, 4], CB.new(4)))
     assert str == "#CircularBuffer<[1, 2, 3, 4]>"
   end
 
@@ -148,16 +150,17 @@ defmodule CircularBufferTest do
 
   def size_and_list do
     let size <- pos_integer() do
-      let is <- ints(size*2, []) do
+      let is <- ints(size * 2 + 1, []) do
         {size, is}
       end
     end
   end
 
   defp ints(0, acc), do: acc
+
   defp ints(size, acc) do
     let i <- integer() do
-      ints(size-1, [i | acc])
+      ints(size - 1, [i | acc])
     end
   end
 end

@@ -15,7 +15,12 @@ defmodule CircularBuffer do
 
   defstruct [:a, :b, :max_size, :count]
   @typedoc "A circular buffer"
-  @opaque t() :: %__MODULE__{a: list(), b: list(), max_size: pos_integer(), count: non_neg_integer()}
+  @opaque t() :: %__MODULE__{
+            a: list(),
+            b: list(),
+            max_size: pos_integer(),
+            count: non_neg_integer()
+          }
 
   alias __MODULE__, as: CB
 
@@ -37,7 +42,7 @@ defmodule CircularBuffer do
 
   def insert(%CB{count: count, max_size: max_size} = cb, item) when count < max_size do
     %CB{cb | a: [item | cb.a], count: cb.count + 1}
-    end
+  end
 
   def insert(%CB{b: []} = cb, item) do
     new_b = cb.a |> Enum.reverse() |> tl()
@@ -55,6 +60,16 @@ defmodule CircularBuffer do
 
   @doc """
   Returns the newest element in the buffer
+
+  ## Examples
+
+      iex> cb = CircularBuffer.new(3)
+      iex> CircularBuffer.newest(cb)
+      nil
+      iex> cb = Enum.reduce(1..4, cb, fn n, cb -> CircularBuffer.insert(cb, n) end)
+      iex> CircularBuffer.newest(cb)
+      4
+
   """
   @spec newest(t()) :: any()
   def newest(%CB{a: [newest | _rest]}), do: newest
@@ -69,6 +84,17 @@ defmodule CircularBuffer do
 
   @doc """
   Checks the buffer to see if its empty
+
+  Returns `true` if the given circular buffer is empty, otherwise `false`.
+
+  ## Examples
+
+      iex> cb = CircularBuffer.new(1)
+      iex> CircularBuffer.empty?(cb)
+      true
+      iex> cb |> CircularBuffer.insert(1) |> CircularBuffer.empty?()
+      false
+
   """
   @spec empty?(t()) :: boolean()
   def empty?(%CB{} = cb) do
