@@ -1,7 +1,7 @@
 defmodule CircularBuffer.MixProject do
   use Mix.Project
 
-  @version "0.4.1-dev"
+  @version "0.4.0"
 
   def project do
     [
