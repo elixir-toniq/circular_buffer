@@ -131,7 +131,7 @@ defmodule CircularBufferTest do
     assert Enum.slice(cb, 6, 5) == []
     assert Enum.slice(cb, 6, 0) == []
     assert Enum.slice(cb, -6, 0) == []
-    assert Enum.slice(cb, -6, 5) == []
+    assert Enum.slice(cb, -6, 5) == [1, 2, 3, 4, 5]
     assert Enum.slice(cb, -2, 5) == [4, 5]
     assert Enum.slice(cb, -3, 1) == [3]
 
