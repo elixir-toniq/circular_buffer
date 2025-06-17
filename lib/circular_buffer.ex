@@ -37,16 +37,16 @@ defmodule CircularBuffer do
   """
   @spec insert(t(), any()) :: t()
   def insert(%CB{b: b} = cb, item) when b != [] do
-    %CB{cb | a: [item | cb.a], b: tl(b)}
+    %{cb | a: [item | cb.a], b: tl(b)}
   end
 
   def insert(%CB{count: count, max_size: max_size} = cb, item) when count < max_size do
-    %CB{cb | a: [item | cb.a], count: cb.count + 1}
+    %{cb | a: [item | cb.a], count: cb.count + 1}
   end
 
   def insert(%CB{b: []} = cb, item) do
     new_b = cb.a |> Enum.reverse() |> tl()
-    %CB{cb | a: [item], b: new_b}
+    %{cb | a: [item], b: new_b}
   end
 
   @doc """
