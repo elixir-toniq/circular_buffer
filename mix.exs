@@ -13,7 +13,7 @@ defmodule CircularBuffer.MixProject do
       description: description(),
       package: package(),
       name: "CircularBuffer",
-      source_url: "https://github.com/keathley/circular_buffer",
+      source_url: "https://github.com/elixir-toniq/circular_buffer",
       docs: docs(),
       dialyzer: dialyzer()
     ]
@@ -44,14 +44,14 @@ defmodule CircularBuffer.MixProject do
     [
       name: "circular_buffer",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/keathley/circular_buffer"}
+      links: %{"GitHub" => "https://github.com/elixir-toniq/circular_buffer"}
     ]
   end
 
   def docs do
     [
       source_ref: "v#{@version}",
-      source_url: "https://github.com/keathley/circular_buffer",
+      source_url: "https://github.com/elixir-toniq/circular_buffer",
       main: "CircularBuffer"
     ]
   end
