@@ -44,7 +44,11 @@ defmodule CircularBuffer.MixProject do
     [
       name: "circular_buffer",
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/elixir-toniq/circular_buffer"}
+      links: %{
+        "GitHub" => "https://github.com/elixir-toniq/circular_buffer",
+        "REUSE Compliance" =>
+          "https://api.reuse.software/info/github.com/elixir-toniq/circular_buffer"
+      }
     ]
   end
 
