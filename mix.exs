@@ -58,7 +58,7 @@ defmodule CircularBuffer.MixProject do
 
   defp dialyzer() do
     [
-      flags: [:race_conditions, :unmatched_returns, :error_handling]
+      flags: [:missing_return, :extra_return, :unmatched_returns, :error_handling]
     ]
   end
 end
