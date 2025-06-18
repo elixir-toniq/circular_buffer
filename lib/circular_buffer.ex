@@ -17,6 +17,16 @@ defmodule CircularBuffer do
   CircularBuffers are implemented as Okasaki queues like Erlang's `:queue`
   module, but with additional optimizations thanks to the reduced set
   of operations.
+
+  CircularBuffer implements both the
+  [`Enumerable`](https://hexdocs.pm/elixir/Enumerable.html) and
+  [`Collectable`](https://hexdocs.pm/elixir/Collectable.html) protocols, so code
+  like the following works:
+
+      iex> cb = Enum.into([1, 2, 3, 4], CircularBuffer.new(3))
+      #CircularBuffer<[2, 3, 4]>
+      iex> Enum.map(cb, fn x -> x * 2 end)
+      [4, 6, 8]
   """
 
   defstruct [:a, :b, :max_size, :count]
