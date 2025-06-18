@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0
+
+This release is identical to v0.4.2.
+
 ## v0.4.2
 
 * Changes

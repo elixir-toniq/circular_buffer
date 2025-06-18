@@ -1,7 +1,7 @@
 defmodule CircularBuffer.MixProject do
   use Mix.Project
 
-  @version "0.4.2"
+  @version "1.0.0"
   @description "General purpose circular buffer"
   @source_url "https://github.com/elixir-toniq/circular_buffer"
 
