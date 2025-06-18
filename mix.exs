@@ -2,29 +2,27 @@ defmodule CircularBuffer.MixProject do
   use Mix.Project
 
   @version "0.4.1"
+  @description "General purpose circular buffer"
+  @source_url "https://github.com/elixir-toniq/circular_buffer"
 
   def project do
     [
       app: :circular_buffer,
       version: @version,
       elixir: "~> 1.8",
-      start_permanent: Mix.env() == :prod,
       deps: deps(),
-      description: description(),
+      description: @description,
       package: package(),
-      name: "CircularBuffer",
-      source_url: "https://github.com/elixir-toniq/circular_buffer",
+      source_url: @source_url,
       docs: docs(),
       dialyzer: dialyzer()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     []
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:propcheck, "~> 1.2", only: [:dev, :test]},
@@ -34,29 +32,32 @@ defmodule CircularBuffer.MixProject do
     ]
   end
 
-  def description do
-    """
-    General purpose circular buffer.
-    """
-  end
-
-  def package do
+  defp package do
     [
-      name: "circular_buffer",
+      files: [
+        "CHANGELOG.md",
+        "lib",
+        "LICENSES",
+        "mix.exs",
+        "README.md",
+        "REUSE.toml"
+      ],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/elixir-toniq/circular_buffer",
+        "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
         "REUSE Compliance" =>
           "https://api.reuse.software/info/github.com/elixir-toniq/circular_buffer"
       }
     ]
   end
 
-  def docs do
+  defp docs do
     [
+      extras: ["CHANGELOG.md"],
+      main: "CircularBuffer",
       source_ref: "v#{@version}",
-      source_url: "https://github.com/elixir-toniq/circular_buffer",
-      main: "CircularBuffer"
+      source_url: @source_url
     ]
   end
 

@@ -6,7 +6,7 @@ path = [
  ".formatter.exs",
  ".gitignore",
  ".github/**/*",
- "NOTICE",
+ "CHANGELOG.md",
  "README.md",
  "REUSE.toml",
  "mix.exs",
