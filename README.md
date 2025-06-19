@@ -5,16 +5,14 @@
 [![CI](https://github.com/elixir-toniq/circular_buffer/actions/workflows/elixir.yml/badge.svg)](https://github.com/elixir-toniq/circular_buffer/actions/workflows/elixir.yml)
 [![REUSE status](https://api.reuse.software/badge/github.com/elixir-toniq/circular_buffer)](https://api.reuse.software/info/github.com/elixir-toniq/circular_buffer)
 
-CircularBuffer provides a general-purpose CircularBuffer data structure.
-
-Docs: [https://hexdocs.pm/circular_buffer](https://hexdocs.pm/circular_buffer).
+CircularBuffer provides a general-purpose circular buffer data structure.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:circular_buffer, "~> 0.4"}
+    {:circular_buffer, "~> 1.0"}
   ]
 end
 ```
