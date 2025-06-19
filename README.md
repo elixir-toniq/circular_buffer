@@ -43,7 +43,7 @@ end
 
 ## Should I use this?
 
-The entire codebase is about 70 lines of code, has been tested using property
-based testing, and has been used in production for several years. I believe the
-implementation is sound but it may not be the highest performance library out
-there.
+The entire codebase consists of around 70 lines, has been property-tested, and
+has been in production for several years. Its implementation is similar to
+Erlang’s [`queue`](https://www.erlang.org/docs/28/apps/stdlib/queue.html) module
+but simplified for the circular buffer use case.
