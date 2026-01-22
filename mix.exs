@@ -26,12 +26,24 @@ defmodule CircularBuffer.MixProject do
     []
   end
 
+  def cli do
+    [
+      preferred_envs: %{
+        dialyzer: :test,
+        docs: :docs,
+        "hex.build": :docs,
+        "hex.publish": :docs,
+        credo: :test
+      }
+    ]
+  end
+
   defp deps do
     [
-      {:propcheck, "~> 1.2", only: [:dev, :test]},
-      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:propcheck, "~> 1.2", only: :test},
+      {:credo, "~> 1.5", only: :test, runtime: false},
+      {:ex_doc, "~> 0.19", only: :docs, runtime: false},
+      {:dialyxir, "~> 1.4", only: :test, runtime: false}
     ]
   end
 
