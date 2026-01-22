@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: None
+  SPDX-License-Identifier: CC0-1.0
+-->
+
 # CircularBuffer
 
 [![Hex version](https://img.shields.io/hexpm/v/circular_buffer.svg "Hex version")](https://hex.pm/packages/circular_buffer)
