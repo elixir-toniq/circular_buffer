@@ -52,8 +52,8 @@ defmodule CircularBuffer do
   Inserts a new item into the next location of the circular buffer
   """
   @spec insert(t(), any()) :: t()
-  def insert(%CB{b: b} = cb, item) when b != [] do
-    %{cb | a: [item | cb.a], b: tl(b)}
+  def insert(%CB{a: a, b: [_ | tl_b]} = cb, item) do
+    %{cb | a: [item | a], b: tl_b}
   end
 
   def insert(%CB{count: count, max_size: max_size} = cb, item) when count < max_size do
