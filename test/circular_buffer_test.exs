@@ -6,7 +6,7 @@
 #
 defmodule CircularBufferTest do
   use ExUnit.Case, async: false
-  use PropCheck
+  use PropCheck, default_opts: [:quiet, {:numtests, 10_000}]
   doctest CircularBuffer
 
   alias CircularBuffer, as: CB
