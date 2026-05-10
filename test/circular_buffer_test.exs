@@ -108,11 +108,7 @@ defmodule CircularBufferTest do
 
       buffer = Enum.reduce(iis, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
 
-      oldest =
-        iis
-        |> Enum.reverse()
-        |> Enum.drop(size - 1)
-        |> Enum.at(0)
+      oldest = iis |> Enum.take(-size) |> List.first()
 
       CB.oldest(buffer) == oldest
     end
@@ -156,17 +152,11 @@ defmodule CircularBufferTest do
 
   def size_and_list do
     let size <- pos_integer() do
-      let is <- ints(size * 2 + 1, []) do
-        {size, is}
+      let n <- range(0, size * 2 + 1) do
+        let is <- vector(n, integer()) do
+          {size, is}
+        end
       end
-    end
-  end
-
-  defp ints(0, acc), do: acc
-
-  defp ints(size, acc) do
-    let i <- integer() do
-      ints(size - 1, [i | acc])
     end
   end
 end
