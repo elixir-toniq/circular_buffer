@@ -23,7 +23,7 @@ jobs:
             otp: '28'
     steps:
     - name: checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: setup
@@ -32,7 +32,7 @@ jobs:
         elixir-version: ${{ matrix.pair.elixir }}
         otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: mix-cache
       with:
         path: |
@@ -62,7 +62,7 @@ jobs:
           - elixir: '1.19.5'
             otp: '28'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Setup elixir
@@ -71,7 +71,7 @@ jobs:
         elixir-version: ${{ matrix.pair.elixir }}
         otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: mix-cache
       with:
         path: |
@@ -96,7 +96,7 @@ jobs:
           - elixir: '1.19.5'
             otp: '28'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - uses: erlef/setup-beam@v1
@@ -104,7 +104,7 @@ jobs:
         elixir-version: ${{ matrix.pair.elixir }}
         otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: mix-cache
       with:
         path: |
