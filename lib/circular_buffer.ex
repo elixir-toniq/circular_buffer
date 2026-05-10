@@ -127,8 +127,14 @@ defmodule CircularBuffer do
     end
 
     def reduce(cb, acc, fun) do
-      Enumerable.List.reduce(CB.to_list(cb), acc, fun)
+      do_reduce(cb.b, Enum.reverse(cb.a), acc, fun)
     end
+
+    defp do_reduce(_b, _a, {:halt, acc}, _fun), do: {:halted, acc}
+    defp do_reduce(b, a, {:suspend, acc}, fun), do: {:suspended, acc, &do_reduce(b, a, &1, fun)}
+    defp do_reduce([], [], {:cont, acc}, _fun), do: {:done, acc}
+    defp do_reduce([], [h | t], {:cont, acc}, fun), do: do_reduce([], t, fun.(h, acc), fun)
+    defp do_reduce([h | t], a, {:cont, acc}, fun), do: do_reduce(t, a, fun.(h, acc), fun)
 
     def slice(_cb) do
       {:error, __MODULE__}
