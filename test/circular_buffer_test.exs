@@ -44,20 +44,26 @@ defmodule CircularBufferTest do
     end
   end
 
-  property "member?/1" do
-    items = such_that({a, b} <- {pos_integer(), pos_integer()}, when: a != b)
+  property "member?/2 reflects buffer contents" do
+    forall {size, is} <- size_and_list() do
+      iis = Enum.with_index(is)
+      buffer = Enum.reduce(iis, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
 
-    forall {a, b} <- items do
-      cb = CB.new(1) |> CB.insert(a)
-      !Enum.member?(cb, b) && Enum.member?(cb, a)
+      kept = Enum.take(iis, -size)
+      evicted = Enum.drop(iis, -size)
+
+      Enum.all?(kept, &Enum.member?(buffer, &1)) and
+        Enum.all?(evicted, fn x -> not Enum.member?(buffer, x) end) and
+        not Enum.member?(buffer, :never_inserted)
     end
   end
 
   property "implements Enumerable" do
-    forall is <- list(integer()) do
-      buffer = Enum.reduce(is, CB.new(length(is) + 1), fn i, cb -> CB.insert(cb, i) end)
+    forall {size, is} <- size_and_list() do
+      buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
 
-      Enum.reduce(buffer, 0, fn acc, i -> acc + i end) == Enum.sum(is)
+      Enum.reduce(buffer, 0, fn elem, acc -> acc + elem end) ==
+        Enum.sum(Enum.take(is, -size))
     end
   end
 
