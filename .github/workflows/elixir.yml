@@ -16,8 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: [1.15]
-        otp: [26]
+        pair:
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.19.5'
+            otp: '28'
     steps:
     - name: checkout
       uses: actions/checkout@v4
@@ -26,8 +29,8 @@ jobs:
     - name: setup
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: ${{ matrix.elixir }}
-        otp-version: ${{ matrix.otp }}
+        elixir-version: ${{ matrix.pair.elixir }}
+        otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
       uses: actions/cache@v4
       id: mix-cache
@@ -36,7 +39,7 @@ jobs:
           deps
           _build
           priv/plts
-        key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+        key: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-${{ hashFiles('mix.lock') }}
     - name: Install deps
       if: steps.mix-cache.outputs.cache-hit != 'true'
       run: |
@@ -53,8 +56,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: [1.15]
-        otp: [26]
+        pair:
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.19.5'
+            otp: '28'
     steps:
     - uses: actions/checkout@v4
       with:
@@ -62,8 +68,8 @@ jobs:
     - name: Setup elixir
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: ${{ matrix.elixir }}
-        otp-version: ${{ matrix.otp }}
+        elixir-version: ${{ matrix.pair.elixir }}
+        otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
       uses: actions/cache@v4
       id: mix-cache
@@ -72,7 +78,7 @@ jobs:
           deps
           _build
           priv/plts
-        key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+        key: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-${{ hashFiles('mix.lock') }}
     - name: Run Credo
       run: mix credo
     - name: Run Dialyzer
@@ -84,16 +90,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: [1.15]
-        otp: [26]
+        pair:
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.19.5'
+            otp: '28'
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - uses: erlef/setup-beam@v1
       with:
-        elixir-version: ${{ matrix.elixir }}
-        otp-version: ${{ matrix.otp }}
+        elixir-version: ${{ matrix.pair.elixir }}
+        otp-version: ${{ matrix.pair.otp }}
     - name: Retrieve Cached Dependencies
       uses: actions/cache@v4
       id: mix-cache
@@ -102,6 +111,6 @@ jobs:
           deps
           _build
           priv/plts
-        key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-${{ hashFiles('mix.lock') }}
+        key: ${{ runner.os }}-${{ matrix.pair.otp }}-${{ matrix.pair.elixir }}-${{ hashFiles('mix.lock') }}
     - name: Run Tests
       run: mix test
