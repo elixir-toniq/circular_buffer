@@ -5,6 +5,13 @@
 
 # Changelog
 
+## v1.0.1
+
+* Changes
+  * Improve common buffer insertion case when buffer overflows by ~13%
+  * Remove unneeded list concatenation for reduce
+  * Property test improvements to cover more edge cases (no issues found)
+
 ## v1.0.0
 
 This release is identical to v0.4.2.
