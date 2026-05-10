@@ -11,17 +11,25 @@ defmodule CircularBufferTest do
 
   alias CircularBuffer, as: CB
 
-  property "new/1 accepts a max size" do
-    forall i <- integer() do
-      try do
-        buffer = CB.new(i)
-        buffer.max_size == i
-      rescue
-        FunctionClauseError ->
-          i <= 0
+  property "new/1 returns an empty buffer for positive sizes" do
+    forall size <- pos_integer() do
+      cb = CB.new(size)
 
-        _ ->
-          false
+      cb.max_size == size and
+        cb.count == 0 and
+        cb.a == [] and
+        cb.b == [] and
+        CB.empty?(cb)
+    end
+  end
+
+  property "new/1 raises for non-positive sizes" do
+    forall n <- non_neg_integer() do
+      try do
+        CB.new(-n)
+        false
+      rescue
+        FunctionClauseError -> true
       end
     end
   end
