@@ -19,8 +19,8 @@ defmodule CircularBuffer do
   of operations.
 
   CircularBuffer implements both the
-  [`Enumerable`](https://hexdocs.pm/elixir/Enumerable.html) and
-  [`Collectable`](https://hexdocs.pm/elixir/Collectable.html) protocols, so code
+  [`Enumerable`](https://elixir.hexdocs.pm/Enumerable.html) and
+  [`Collectable`](https://elixir.hexdocs.pm/Collectable.html) protocols, so code
   like the following works:
 
       iex> cb = Enum.into([1, 2, 3, 4], CircularBuffer.new(3))
