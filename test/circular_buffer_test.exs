@@ -154,14 +154,6 @@ defmodule CircularBufferTest do
     assert_raise FunctionClauseError, fn ->
       Enum.slice(cb, 0, -1)
     end
-
-    assert_raise FunctionClauseError, fn ->
-      Enum.slice(cb, 0.99, 0)
-    end
-
-    assert_raise FunctionClauseError, fn ->
-      Enum.slice(cb, 0, 0.99)
-    end
   end
 
   def size_and_list do

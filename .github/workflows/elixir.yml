@@ -19,8 +19,8 @@ jobs:
         pair:
           - elixir: '1.15'
             otp: '26'
-          - elixir: '1.19.5'
-            otp: '28'
+          - elixir: '1.20'
+            otp: '29'
     steps:
     - name: checkout
       uses: actions/checkout@v6
@@ -59,8 +59,8 @@ jobs:
         pair:
           - elixir: '1.15'
             otp: '26'
-          - elixir: '1.19.5'
-            otp: '28'
+          - elixir: '1.20'
+            otp: '29'
     steps:
     - uses: actions/checkout@v6
       with:
@@ -93,8 +93,8 @@ jobs:
         pair:
           - elixir: '1.15'
             otp: '26'
-          - elixir: '1.19.5'
-            otp: '28'
+          - elixir: '1.20'
+            otp: '29'
     steps:
     - uses: actions/checkout@v6
       with:
