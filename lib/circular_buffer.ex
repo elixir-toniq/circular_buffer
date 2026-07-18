@@ -34,7 +34,7 @@ defmodule CircularBuffer do
   @opaque t() :: %__MODULE__{
             a: list(),
             b: list(),
-            max_size: pos_integer(),
+            max_size: non_neg_integer(),
             count: non_neg_integer()
           }
 
@@ -43,8 +43,8 @@ defmodule CircularBuffer do
   @doc """
   Creates a new circular buffer with a given size.
   """
-  @spec new(pos_integer()) :: t()
-  def new(size) when is_integer(size) and size > 0 do
+  @spec new(non_neg_integer()) :: t()
+  def new(size) when is_integer(size) and size >= 0 do
     %CB{a: [], b: [], max_size: size, count: 0}
   end
 
@@ -60,10 +60,13 @@ defmodule CircularBuffer do
     %{cb | a: [item | cb.a], count: cb.count + 1}
   end
 
-  def insert(%CB{b: []} = cb, item) do
-    new_b = cb.a |> Enum.reverse() |> tl()
+  def insert(%CB{a: a, b: []} = cb, item) when a != [] do
+    new_b = a |> Enum.reverse() |> tl()
     %{cb | a: [item], b: new_b}
   end
+
+  # max_size==0 case
+  def insert(cb, _item), do: cb
 
   @doc """
   Converts a circular buffer to a list. The list is ordered from oldest to newest

@@ -11,8 +11,8 @@ defmodule CircularBufferTest do
 
   alias CircularBuffer, as: CB
 
-  property "new/1 returns an empty buffer for positive sizes" do
-    forall size <- pos_integer() do
+  property "new/1 returns an empty buffer for non-negative sizes" do
+    forall size <- non_neg_integer() do
       cb = CB.new(size)
 
       cb.max_size == size and
@@ -23,10 +23,10 @@ defmodule CircularBufferTest do
     end
   end
 
-  property "new/1 raises for non-positive sizes" do
-    forall n <- non_neg_integer() do
+  property "new/1 raises for negative sizes" do
+    forall n <- neg_integer() do
       try do
-        CB.new(-n)
+        CB.new(n)
         false
       rescue
         FunctionClauseError -> true
@@ -39,14 +39,14 @@ defmodule CircularBufferTest do
   end
 
   property "the count matches the number of elements in the buffer" do
-    forall {size, is} <- {pos_integer(), list(integer())} do
+    forall {size, is} <- {non_neg_integer(), list(integer())} do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
       slow_cb_count(buffer) == buffer.count
     end
   end
 
   property "can tell the current number of elements" do
-    forall {size, is} <- {pos_integer(), list(integer())} do
+    forall {size, is} <- {non_neg_integer(), list(integer())} do
       buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
       Enum.count(buffer) == min(size, length(is))
     end
