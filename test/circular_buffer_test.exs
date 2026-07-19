@@ -128,9 +128,23 @@ defmodule CircularBufferTest do
     end
   end
 
-  test "can be inspected" do
-    str = inspect(Enum.into([1, 2, 3, 4], CB.new(4)))
-    assert str == "#CircularBuffer<[1, 2, 3, 4]>"
+  property "inspect matches contents" do
+    forall {size, is} <- size_and_list() do
+      buffer = Enum.reduce(is, CB.new(size), fn i, cb -> CB.insert(cb, i) end)
+      {inspected, _} = Code.eval_string(inspect(buffer, limit: :infinity))
+
+      buffer.max_size == inspected.max_size and CB.to_list(inspected) == CB.to_list(buffer)
+    end
+  end
+
+  test "inspecting zero-length buffer" do
+    str = inspect(CB.new(0))
+    assert str == "CircularBuffer.new([], 0)"
+  end
+
+  test "max_size matches created size" do
+    cb = CB.new(15)
+    assert CB.max_size(cb) == 15
   end
 
   test "Enum.slice" do

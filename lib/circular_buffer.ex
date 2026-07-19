@@ -24,7 +24,6 @@ defmodule CircularBuffer do
   like the following works:
 
       iex> cb = Enum.into([1, 2, 3, 4], CircularBuffer.new(3))
-      #CircularBuffer<[2, 3, 4]>
       iex> Enum.map(cb, fn x -> x * 2 end)
       [4, 6, 8]
   """
@@ -46,6 +45,14 @@ defmodule CircularBuffer do
   @spec new(non_neg_integer()) :: t()
   def new(size) when is_integer(size) and size >= 0 do
     %CB{a: [], b: [], max_size: size, count: 0}
+  end
+
+  @doc """
+  Creates a new circular buffer with a given size and contents
+  """
+  @spec new(Enumerable.t(), non_neg_integer()) :: t()
+  def new(enumerable, size) when is_integer(size) and size >= 0 do
+    Enum.reduce(enumerable, new(size), &insert(&2, &1))
   end
 
   @doc """
@@ -120,6 +127,12 @@ defmodule CircularBuffer do
     cb.count == 0
   end
 
+  @doc """
+  Return the max size of the buffer
+  """
+  @spec max_size(t()) :: non_neg_integer()
+  def max_size(%CB{max_size: max_size}), do: max_size
+
   defimpl Enumerable do
     def count(cb) do
       {:ok, cb.count}
@@ -160,7 +173,13 @@ defmodule CircularBuffer do
     import Inspect.Algebra
 
     def inspect(cb, opts) do
-      concat(["#CircularBuffer<", to_doc(CB.to_list(cb), opts), ">"])
+      concat([
+        "CircularBuffer.new(",
+        to_doc(CB.to_list(cb), opts),
+        ", ",
+        to_doc(CB.max_size(cb), opts),
+        ")"
+      ])
     end
   end
 end

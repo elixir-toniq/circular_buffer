@@ -15,11 +15,11 @@ CircularBuffer provides a general-purpose circular buffer data structure.
 ```elixir
 # Create a new circular buffer that holds 5 elements
 iex> cb = CircularBuffer.new(5)
-#CircularBuffer<[]>
+CircularBuffer.new([], 5)
 
 # Fill it up
 iex> cb = Enum.into(1..5, cb)
-#CircularBuffer<[1, 2, 3, 4, 5]>
+CircularBuffer.new([1, 2, 3, 4, 5], 5)
 
 # Verify that 1 is the oldest and 5 is the newest element in the buffer
 iex> CircularBuffer.oldest(cb)
@@ -29,7 +29,7 @@ iex> CircularBuffer.newest(cb)
 
 # Add another element. 1 gets pushed out.
 iex> cb = CircularBuffer.insert(cb, 6)
-#CircularBuffer<[2, 3, 4, 5, 6]>
+CircularBuffer.new([2, 3, 4, 5, 6], 5)
 
 # CircularBuffer implements Enumerable so all Enum.* functions work
 iex> Enum.sum(cb)
