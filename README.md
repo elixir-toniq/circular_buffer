@@ -48,7 +48,7 @@ end
 
 ## Should I use this?
 
-The entire codebase consists of around 70 lines, has been property-tested, and
-has been in production for several years. Its implementation is similar to
-Erlang’s [`queue`](https://www.erlang.org/docs/28/apps/stdlib/queue.html) module
-but simplified for the circular buffer use case.
+The entire codebase consists of one file, has been property-tested, and has been
+in production for several years. Its implementation is similar to Erlang’s
+[`queue`](https://www.erlang.org/docs/28/apps/stdlib/queue.html) module but
+simplified for the circular buffer use case.
