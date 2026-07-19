@@ -5,6 +5,20 @@
 
 # Changelog
 
+## v1.1.0
+
+* New features
+  * Add `CircularBuffer.new(enumerable, max_size)` to create a buffer with an
+    initial set of contents. This allows for CircularBuffers to be created at
+    the end of a pipeline.
+  * Add `CircularBuffer.max_size(cb)` to return the max size of the buffer. This
+    avoids the Dialyzer warning when reaching into the opaque cb type.
+  * `inspect`ing a CircularBuffer now returns a call to `CircularBuffer.new/2`
+    that can be copy/pasted.
+  * Zero-length CircularBuffers can now be created. While not normally useful,
+    supporting them can remove some edge case code in people's programs and it's
+    a minimal change to the CircularBuffer codebase.
+
 ## v1.0.1
 
 * Changes
