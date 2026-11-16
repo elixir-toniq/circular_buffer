@@ -1,0 +1,559 @@
+<!doctype html>
+<!--
+SPDX-FileCopyrightText: 2019 Chris Keathley
+SPDX-FileCopyrightText: 2020 Frank Hunleth
+SPDX-FileCopyrightText: 2022 Milton Mazzarri
+SPDX-FileCopyrightText: 2026 Frank Hunleth
+SPDX-License-Identifier: MIT
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CircularBuffer: two lists vs. Hood-Melville</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #23352e;
+      --muted: #5c6d64;
+      --line: #d9e0d8;
+      --paper: #f5f5ee;
+      --current: #247756;
+      --hood: #af5423;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+    main { max-width: 1280px; margin: auto; padding: 40px 24px; }
+    h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.1; letter-spacing: -2px; margin: 12px 0; }
+    h2 { font-size: 22px; margin: 0; letter-spacing: -0.5px; }
+    h3 { font-size: 14px; margin: 20px 0 8px; }
+    p { margin: 8px 0; }
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .eyebrow { color: var(--current); font-size: 12px; font-weight: 750; letter-spacing: 2px; text-transform: uppercase; }
+    .intro { max-width: 740px; color: var(--muted); font-size: 17px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 26px 0 18px; }
+    button, select {
+      font: inherit;
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 13px;
+    }
+    button { cursor: pointer; font-weight: 650; }
+    button:hover:not(:disabled) { border-color: var(--current); background: #edf5ee; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    button:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #3479b7; outline-offset: 3px; }
+    .primary { background: var(--current); color: white; border-color: var(--current); }
+    .primary:hover:not(:disabled) { color: var(--ink); }
+    label { display: flex; align-items: center; gap: 8px; font-weight: 650; }
+    .note { color: var(--muted); font-size: 13px; }
+    .queue, .panel, .work, details { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+    .queue { padding: 18px 22px; }
+    .queue-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .status { color: var(--current); font-size: 13px; font-weight: 650; }
+    .queue-order { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    .panel { padding: 22px; min-width: 0; border-top: 4px solid var(--accent); }
+    #current { --accent: var(--current); }
+    #hood { --accent: var(--hood); }
+    .panel-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+    .badge { background: #f1f4ef; border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+    .formula { color: var(--muted); font-size: 13px; margin: 8px 0 16px; }
+    .stats { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .stats strong { color: var(--ink); }
+    .list-row { margin: 13px 0; }
+    .list-label { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; font-size: 12px; color: var(--muted); }
+    .list-label code { color: var(--ink); font-weight: 700; font-size: 13px; }
+    .cells { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 34px; }
+    .cell {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 33px; height: 33px; padding: 0 6px; border: 1px solid;
+      border-radius: 6px; font: 650 13px ui-monospace, monospace;
+    }
+    .cell.invalid { opacity: 0.35; text-decoration: line-through; border-style: dashed; }
+    .cell.evicted { outline: 2px dashed #a52c31; outline-offset: 1px; }
+    .empty { color: #748579; font: 13px ui-monospace, monospace; padding: 5px 0; }
+    .rotation { background: #faf8f3; border: 1px dashed #d6cbbb; border-radius: 10px; padding: 12px; margin-top: 16px; }
+    .rotation h3 { margin-top: 0; }
+    .trace-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 18px 0 8px; }
+    .trace-controls button { padding: 6px 9px; font-size: 12px; }
+    .trace-controls span { margin-left: auto; color: var(--muted); font-size: 12px; }
+    .event { border-left: 3px solid var(--accent); background: #f4f6f1; padding: 10px 12px; min-height: 78px; font-size: 13px; }
+    .event strong { display: block; margin-bottom: 3px; }
+    .event p { margin: 0; color: var(--muted); }
+    .trace-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .trace-list button { padding: 4px 8px; font-size: 12px; }
+    .trace-list button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: white; }
+    .work { padding: 20px 22px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12px; margin-top: 10px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
+    #chart { width: 100%; height: auto; display: block; margin-top: 10px; }
+    details { padding: 16px 22px; margin-top: 18px; }
+    summary { cursor: pointer; font-weight: 700; }
+    details p { max-width: 940px; color: var(--muted); }
+    footer { color: var(--muted); font-size: 12px; margin-top: 20px; }
+    #error { color: #a52c31; font-weight: 650; }
+    @media (max-width: 780px) {
+      main { padding: 24px 14px; }
+      .panels { grid-template-columns: 1fr; }
+      .panel { padding: 17px; }
+      h1 { letter-spacing: -1px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">CircularBuffer / inside the implementation</div>
+      <h1>Same queue. Different work.</h1>
+      <p class="intro">Insert the same values into two persistent circular buffers. Watch one reverse a whole list at once, while the other builds its replacement front a few steps at a time.</p>
+    </header>
+
+    <div class="toolbar">
+      <label for="capacity">Capacity
+        <select id="capacity">
+          <option>0</option><option>1</option><option>2</option><option>3</option>
+          <option>4</option><option selected>8</option><option>16</option><option>32</option>
+        </select>
+      </label>
+      <button id="insert" class="primary">Insert 1</button>
+      <button id="play" aria-pressed="false">Auto insert</button>
+      <button id="reset">Reset</button>
+      <span class="note">Changing capacity resets both buffers.</span>
+    </div>
+    <p id="error" role="alert" hidden></p>
+
+    <section class="queue" aria-labelledby="queue-title">
+      <div class="queue-header">
+        <strong id="queue-title">Committed contents</strong>
+        <span id="status" class="status" role="status" aria-live="polite"></span>
+      </div>
+      <div id="contents" class="cells"></div>
+      <div class="queue-order"><span>Oldest / next evicted</span><span>Newest / last inserted</span></div>
+      <p id="insertion-summary" class="note"></p>
+    </section>
+
+    <div class="panels">
+      <section id="current" class="panel" aria-label="Current two-list implementation"></section>
+      <section id="hood" class="panel" aria-label="Hood-Melville implementation"></section>
+    </div>
+
+    <section class="work" aria-labelledby="work-title">
+      <h2 id="work-title">Rotation work, insertion by insertion</h2>
+      <p class="note">List cells copied by rotation only. This excludes normal insertion, struct updates, and garbage collection: it is not a benchmark or a count of total allocations.</p>
+      <div class="legend">
+        <span><span class="dot" style="background: var(--current)"></span>Current: whole-list reversal</span>
+        <span><span class="dot" style="background: var(--hood)"></span>Hood-Melville: reversal + appending steps</span>
+      </div>
+      <svg id="chart" viewBox="0 0 1000 170" role="img" aria-label="No insertions yet"></svg>
+      <p id="work-summary" class="note"></p>
+    </section>
+
+    <details open>
+      <summary>How to read the visualization</summary>
+      <p>Each row is a list, with its <strong>head on the left</strong>. Matching numbers and colors identify the same value, even when it appears in multiple rotation lists. These are temporary copies, not extra queue elements.</p>
+      <p><strong>Current:</strong> <code>a</code> stores recent inserts newest-first; <code>b</code> stores the oldest remaining elements. When full with <code>b=[]</code>, one insert reverses all of <code>a</code>, evicts its oldest element, and starts a new <code>a</code>.</p>
+      <p><strong>Hood-Melville:</strong> inserts push onto <code>rear</code>; evictions pop <code>front</code>. When the rear outgrows the logical front, a rotation captures both lists. The live front continues serving evictions while a fresh rear accepts inserts. <code>front_len</code> includes elements still being assembled.</p>
+      <p><strong>Rotation states:</strong> <code>reversing</code> copies a front/rear pair per step, then <code>appending</code> prepends the surviving old front. <code>valid</code> says how many copied old-front elements still belong. Crossed-out copies are excluded; eviction lowers <code>valid</code> or removes the head of an already-assembled replacement.</p>
+      <p>Use each column's <strong>Replay / Next</strong> controls to inspect internal checkpoints of the most recent insert. The top row always shows the completed result; checkpoints can temporarily have one fewer item during eviction. Replay does not modify the committed buffer. Both implementations are immutable: updates return new versions.</p>
+    </details>
+
+    <footer>Standalone, offline JavaScript models of <code>lib/circular_buffer.ex</code> and <code>lib/circular_buffer/hood_melville.ex</code>. Arrays stand in for Elixir lists; JavaScript execution costs are not representative of either implementation.</footer>
+  </main>
+  <script>
+    "use strict";
+
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const reverse = list => [...list].reverse();
+    const newCurrent = max_size => ({a: [], b: [], max_size, count: 0});
+    const newHood = max_size => ({
+      front: [], front_len: 0, rear: [], rear_len: 0,
+      rotation: "idle", newest: null, max_size, count: 0
+    });
+    const currentContents = cb => [...cb.b, ...reverse(cb.a)];
+
+    function hoodContents(cb) {
+      const r = cb.rotation;
+      let front;
+      if (r === "idle") front = cb.front;
+      else if (r[0] === "reversing") {
+        front = [...reverse(r[3].slice(0, r[1])), ...r[2], ...reverse(r[4]), ...r[5]];
+      } else if (r[0] === "appending") {
+        front = [...reverse(r[2].slice(0, r[1])), ...r[3]];
+      } else if (r[0] === "done") front = r[1];
+      else throw new Error("Unknown rotation state");
+      return [...front, ...reverse(cb.rear)];
+    }
+
+    function traceRecorder() {
+      const frames = [];
+      const work = {copied: 0, steps: 0, scheduled: 0};
+      const record = (buffer, title, detail) => {
+        frames.push({buffer: clone(buffer), title, detail, work: {...work}});
+      };
+      return {frames, work, record};
+    }
+
+    function insertCurrent(previous, item) {
+      const trace = traceRecorder();
+      let cb = previous;
+      trace.record(cb, "Before insert", `Insert ${item} into the existing version.`);
+      if (cb.b.length > 0) {
+        const evicted = cb.b[0];
+        cb = {...cb, a: [item, ...cb.a], b: cb.b.slice(1)};
+        trace.record(cb, "Evict from b; push onto a", `Drop ${evicted}. No rotation is needed.`);
+      } else if (cb.count < cb.max_size) {
+        cb = {...cb, a: [item, ...cb.a], count: cb.count + 1};
+        trace.record(cb, "Fill the buffer", `Push ${item} onto a and increment count.`);
+      } else if (cb.a.length > 0) {
+        trace.work.copied = cb.a.length;
+        const reversed = reverse(cb.a);
+        cb = {...cb, a: [item], b: reversed.slice(1)};
+        trace.record(cb, "Reverse the whole list", `Reverse ${reversed.length} cells in one insert, drop ${reversed[0]}, and start a=[${item}].`);
+      } else {
+        trace.record(cb, "Zero capacity: no change", `Discard ${item}; the buffer stays empty.`);
+      }
+      return {buffer: cb, frames: trace.frames, work: trace.work};
+    }
+
+    function invalidate(rotation) {
+      if (rotation === "idle") return rotation;
+      if (rotation[0] === "reversing") return [rotation[0], rotation[1] - 1, ...rotation.slice(2)];
+      if (rotation[0] === "appending" && rotation[1] === 0) return ["done", rotation[3].slice(1)];
+      if (rotation[0] === "appending") return [rotation[0], rotation[1] - 1, ...rotation.slice(2)];
+      throw new Error("Invalid eviction state");
+    }
+
+    function rotationStep(rotation, work) {
+      if (rotation === "idle") return {rotation, detail: "Idle: no rotation work."};
+      if (rotation[0] === "done") return {rotation, detail: "Replacement complete: no further rotation work."};
+      work.steps++;
+      if (rotation[0] === "reversing") {
+        const [, valid, front, frontRev, rear, rearRev] = rotation;
+        if (front.length > 0 && rear.length > 0) {
+          work.copied += 2;
+          return {
+            rotation: ["reversing", valid + 1, front.slice(1), [front[0], ...frontRev], rear.slice(1), [rear[0], ...rearRev]],
+            detail: `Copy front ${front[0]} and rear ${rear[0]}; valid becomes ${valid + 1}.`
+          };
+        }
+        if (front.length === 0 && rear.length === 1) {
+          work.copied++;
+          return {
+            rotation: ["appending", valid, frontRev, [rear[0], ...rearRev]],
+            detail: `Copy the final rear element ${rear[0]}; switch to appending.`
+          };
+        }
+      }
+      if (rotation[0] === "appending") {
+        const [, valid, frontRev, newFront] = rotation;
+        if (valid === 0) return {
+          rotation: ["done", newFront],
+          detail: "No surviving old-front copies remain to append. The replacement is done."
+        };
+        if (valid > 0 && frontRev.length > 0) {
+          work.copied++;
+          return {
+            rotation: ["appending", valid - 1, frontRev.slice(1), [frontRev[0], ...newFront]],
+            detail: `Prepend surviving element ${frontRev[0]}; valid becomes ${valid - 1}.`
+          };
+        }
+      }
+      throw new Error("Rotation invariant violated");
+    }
+
+    function checkHood(previous, trace, update) {
+      let cb = previous;
+      if (cb.rear_len > cb.front_len) {
+        cb = {
+          ...cb, front_len: cb.front_len + cb.rear_len, rear: [], rear_len: 0,
+          rotation: ["reversing", 0, cb.front, [], cb.rear, []]
+        };
+        trace.record(cb, "Start a rotation", "rear_len exceeded front_len. Capture the old lists; new inserts now use a fresh rear.");
+      }
+      for (let step = 1; step <= 2; step++) {
+        trace.work.scheduled++;
+        const result = rotationStep(cb.rotation, trace.work);
+        cb = {...cb, rotation: result.rotation};
+        trace.record(cb, `${update}: scheduled step ${step}/2`, result.detail);
+      }
+      if (Array.isArray(cb.rotation) && cb.rotation[0] === "done") {
+        cb = {...cb, front: cb.rotation[1], rotation: "idle"};
+        trace.record(cb, "Install the replacement front", "Swap in the completed front and return to idle.");
+      }
+      return cb;
+    }
+
+    function insertHood(previous, item) {
+      const trace = traceRecorder();
+      let cb = previous;
+      trace.record(cb, "Before insert", `Insert ${item} into the existing version.`);
+      if (cb.max_size === 0) {
+        trace.record(cb, "Zero capacity: no change", `Discard ${item}; no queue updates or rotation steps.`);
+        return {buffer: cb, frames: trace.frames, work: trace.work};
+      }
+      if (cb.count === cb.max_size) {
+        if (cb.front.length === 0) throw new Error("A full buffer must have a usable front");
+        const evicted = cb.front[0];
+        const rotating = cb.rotation !== "idle";
+        cb = {
+          ...cb, front: cb.front.slice(1), front_len: cb.front_len - 1,
+          rotation: invalidate(cb.rotation), count: cb.count - 1
+        };
+        trace.record(cb, `Dequeue ${evicted}${rotating ? " and invalidate its copy" : ""}`,
+          rotating ? "Remove the oldest live element and adjust the unfinished replacement so it cannot reappear." : "Remove the head of front and decrement front_len and count.");
+        cb = checkHood(cb, trace, "Dequeue");
+      }
+      cb = {...cb, rear: [item, ...cb.rear], rear_len: cb.rear_len + 1, newest: item, count: cb.count + 1};
+      trace.record(cb, `Enqueue ${item}`, "Push onto rear; increment rear_len and count; cache newest.");
+      cb = checkHood(cb, trace, "Enqueue");
+      trace.record(cb, "Insert complete", "Return this new immutable buffer version.");
+      return {buffer: cb, frames: trace.frames, work: trace.work};
+    }
+
+    globalThis.CircularBufferVisualization = {
+      newCurrent, newHood, insertCurrent, insertHood, currentContents, hoodContents
+    };
+
+    function initialize() {
+      const byId = id => document.getElementById(id);
+      const element = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      let current, hood, nextItem, history, selections, timer = null, lastEvicted = null;
+
+      function cells(list, valid = list.length) {
+        const row = element("div", "cells");
+        if (list.length === 0) row.append(element("span", "empty", "[]"));
+        list.forEach((item, index) => {
+          const cell = element("span", `cell${index >= valid ? " invalid" : ""}${item === lastEvicted ? " evicted" : ""}`, item);
+          const hue = (item * 47) % 360;
+          cell.style.backgroundColor = `hsl(${hue} 48% 92%)`;
+          cell.style.borderColor = `hsl(${hue} 35% 65%)`;
+          cell.style.color = `hsl(${hue} 45% 25%)`;
+          cell.title = index >= valid ? `${item}: obsolete copy, excluded from contents` : String(item);
+          row.append(cell);
+        });
+        return row;
+      }
+
+      function listRow(name, list, description, valid) {
+        const row = element("div", "list-row");
+        const label = element("div", "list-label");
+        label.append(element("code", "", name), element("span", "", description));
+        row.append(label, cells(list, valid));
+        return row;
+      }
+
+      function stat(label, value) {
+        const node = element("span");
+        node.append(document.createTextNode(`${label}: `), element("strong", "mono", value));
+        return node;
+      }
+
+      function selectFrame(kind, result, selection, controlLabel) {
+        selections[kind] = selection;
+        renderPanel(kind, result);
+        const panel = byId(kind);
+        const control = [...panel.querySelectorAll(".trace-controls button")].find(button => button.textContent === controlLabel);
+        const target = control && !control.disabled ? control : panel.querySelector('.trace-list button[aria-pressed="true"]');
+        target.focus();
+      }
+
+      function renderPanel(kind, result) {
+        const panel = byId(kind);
+        panel.replaceChildren();
+        const frame = result.frames[selections[kind]];
+        const cb = frame.buffer;
+        const header = element("div", "panel-header");
+        header.append(element("h2", "", kind === "current" ? "Current / two lists" : "Hood-Melville"));
+        const state = kind === "current"
+          ? (frame.work.copied > 0 ? "whole-list rotation" : "no rotation")
+          : (cb.rotation === "idle" ? "idle" : cb.rotation[0]);
+        header.append(element("span", "badge mono", state));
+        panel.append(header, element("p", "formula mono", kind === "current" ? "contents = b ++ reverse(a)" : "contents = logical_front ++ reverse(rear)"));
+        const stats = element("div", "stats");
+        stats.append(stat("count", cb.count), stat("capacity", cb.max_size));
+        if (kind === "hood") {
+          stats.append(stat("front_len", cb.front_len), stat("rear_len", cb.rear_len), stat("cached newest", cb.newest === null ? "nil" : cb.newest));
+        }
+        panel.append(stats);
+        if (kind === "current") {
+          panel.append(listRow("a", cb.a, "newest-first"), listRow("b", cb.b, "oldest-first"));
+        } else {
+          panel.append(listRow("front", cb.front, "live front / oldest-first"), listRow("rear", cb.rear, "fresh inserts / newest-first"));
+          const rotation = element("div", "rotation");
+          rotation.append(element("h3", "mono", `rotation: ${state}`));
+          const r = cb.rotation;
+          if (r === "idle") rotation.append(element("p", "note", "No replacement is being assembled."));
+          else if (r[0] === "reversing") {
+            rotation.append(stat("valid", r[1]),
+              listRow("remaining front", r[2], "captured old front"),
+              listRow("front_rev", r[3], "first valid copies survive", r[1]),
+              listRow("remaining rear", r[4], "captured old rear"),
+              listRow("rear_rev", r[5], "rear copied so far"));
+          } else if (r[0] === "appending") {
+            rotation.append(stat("valid", r[1]),
+              listRow("front_rev", r[2], "first valid copies still need prepending", r[1]),
+              listRow("new_front", r[3], "replacement assembled so far"));
+          } else rotation.append(listRow("new_front", r[1], "ready to install"));
+          panel.append(rotation);
+        }
+        const controls = element("div", "trace-controls");
+        for (const [text, selection, disabled] of [
+          ["Replay", 0, selections[kind] === 0],
+          ["Previous", selections[kind] - 1, selections[kind] === 0],
+          ["Next", selections[kind] + 1, selections[kind] === result.frames.length - 1]
+        ]) {
+          const button = element("button", "", text);
+          button.disabled = disabled || timer !== null;
+          button.setAttribute("aria-label", `${text} checkpoint: ${kind === "current" ? "current implementation" : "Hood-Melville"}`);
+          button.addEventListener("click", () => selectFrame(kind, result, selection, text));
+          controls.append(button);
+        }
+        controls.append(element("span", "", `Checkpoint ${selections[kind] + 1} / ${result.frames.length}`));
+        panel.append(controls);
+        const event = element("div", "event");
+        event.append(element("strong", "", frame.title), element("p", "", frame.detail));
+        panel.append(event);
+        const trace = element("div", "trace-list");
+        result.frames.forEach((entry, index) => {
+          const button = element("button", "", index + 1);
+          button.title = entry.title;
+          button.setAttribute("aria-label", `Checkpoint ${index + 1}: ${entry.title}`);
+          button.setAttribute("aria-pressed", String(index === selections[kind]));
+          button.disabled = timer !== null;
+          button.addEventListener("click", () => selectFrame(kind, result, index));
+          trace.append(button);
+        });
+        panel.append(trace, element("p", "note", `At this checkpoint: ${frame.work.copied} rotation cells copied` +
+          (kind === "hood" ? `; ${frame.work.steps} active steps / ${frame.work.scheduled} scheduled calls.` : ".")));
+      }
+
+      function renderChart() {
+        const svg = byId("chart");
+        svg.replaceChildren();
+        const ns = "http://www.w3.org/2000/svg";
+        const node = (tag, attributes, text) => {
+          const result = document.createElementNS(ns, tag);
+          for (const [key, value] of Object.entries(attributes)) result.setAttribute(key, value);
+          if (text !== undefined) result.textContent = text;
+          return result;
+        };
+        const max = Math.max(4, ...history.flatMap(entry => [entry.current.work.copied, entry.hood.work.copied]));
+        const spacing = 950 / Math.max(history.length, 1);
+        svg.append(node("line", {x1: 35, x2: 985, y1: 138, y2: 138, stroke: "#d9e0d8"}));
+        svg.append(node("text", {x: 0, y: 20, fill: "#5c6d64", "font-size": 12}, max));
+        svg.append(node("text", {x: 0, y: 138, fill: "#5c6d64", "font-size": 12}, "0"));
+        history.forEach((entry, index) => {
+          const x = 35 + index * spacing;
+          for (const [kind, offset, color] of [["current", 0, "#247756"], ["hood", 1, "#af5423"]]) {
+            const value = entry[kind].work.copied;
+            const height = value / max * 118;
+            const rect = node("rect", {x: x + offset * spacing * 0.35, y: 138 - height, width: spacing * 0.3, height, rx: 2, fill: color});
+            rect.append(node("title", {}, `Insert ${entry.item}, ${kind}: ${value} rotation cells copied`));
+            svg.append(rect);
+          }
+          svg.append(node("text", {x: x + spacing * 0.3, y: 158, "text-anchor": "middle", fill: "#5c6d64", "font-size": 11}, entry.item));
+        });
+        svg.setAttribute("aria-label", history.length === 0 ? "No insertions yet" :
+          history.map(entry => `Insert ${entry.item}: current ${entry.current.work.copied}, Hood-Melville ${entry.hood.work.copied} cells`).join("; "));
+      }
+
+      function render() {
+        const contents = currentContents(current.buffer);
+        byId("contents").replaceChildren(cells(contents));
+        byId("status").textContent = `Both agree / ${contents.length} of ${current.buffer.max_size} slots`;
+        byId("insert").textContent = `Insert ${nextItem}`;
+        byId("insertion-summary").textContent = nextItem === 1 ? "Ready. Insert a value to begin; Replay shows the most recent insert's internal steps." :
+          `Completed insert ${nextItem - 1}. ` + (current.buffer.max_size === 0 ? "Zero capacity: the value was discarded." :
+            lastEvicted === null ? "The buffer was still filling." : `Evicted ${lastEvicted}. Dashed red outlines mark any remaining physical copies of that value.`);
+        renderPanel("current", current);
+        renderPanel("hood", hood);
+        renderChart();
+        byId("work-summary").textContent = `Latest insert: current copied ${current.work.copied} rotation cells; Hood-Melville copied ${hood.work.copied} in ${hood.work.steps} active steps (${hood.work.scheduled} scheduled calls). Showing the last ${history.length} inserts.`;
+      }
+
+      function stop() {
+        if (timer !== null) clearInterval(timer);
+        timer = null;
+        byId("play").textContent = "Auto insert";
+        byId("play").setAttribute("aria-pressed", "false");
+      }
+
+      function insert() {
+        try {
+          const before = currentContents(current.buffer);
+          const capacity = current.buffer.max_size;
+          const expected = capacity === 0 ? [] : [...before, nextItem].slice(-capacity);
+          const nextCurrent = insertCurrent(current.buffer, nextItem);
+          const nextHood = insertHood(hood.buffer, nextItem);
+          if (JSON.stringify(currentContents(nextCurrent.buffer)) !== JSON.stringify(expected) ||
+              JSON.stringify(hoodContents(nextHood.buffer)) !== JSON.stringify(expected)) {
+            throw new Error("The two models disagree with the expected FIFO contents.");
+          }
+          lastEvicted = capacity > 0 && before.length === capacity ? before[0] : null;
+          current = nextCurrent;
+          hood = nextHood;
+          history.push({item: nextItem, current, hood});
+          history = history.slice(-24);
+          nextItem++;
+          selections = {current: current.frames.length - 1, hood: hood.frames.length - 1};
+          render();
+        } catch (error) {
+          stop();
+          byId("error").hidden = false;
+          byId("error").textContent = error.message;
+          render();
+        }
+      }
+
+      function reset() {
+        stop();
+        const capacity = Number(byId("capacity").value);
+        const initial = buffer => ({
+          buffer, frames: [{buffer: clone(buffer), title: "Empty buffer", detail: "No insertions yet.", work: {copied: 0, steps: 0, scheduled: 0}}],
+          work: {copied: 0, steps: 0, scheduled: 0}
+        });
+        current = initial(newCurrent(capacity));
+        hood = initial(newHood(capacity));
+        nextItem = 1;
+        history = [];
+        selections = {current: 0, hood: 0};
+        lastEvicted = null;
+        byId("error").hidden = true;
+        render();
+      }
+
+      byId("insert").addEventListener("click", insert);
+      byId("reset").addEventListener("click", reset);
+      byId("capacity").addEventListener("change", reset);
+      byId("play").addEventListener("click", () => {
+        if (timer !== null) stop();
+        else {
+          timer = setInterval(insert, 1200);
+          byId("play").textContent = "Pause";
+          byId("play").setAttribute("aria-pressed", "true");
+        }
+        render();
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { stop(); render(); }
+      });
+      reset();
+    }
+
+    if (typeof document !== "undefined") initialize();
+  </script>
+</body>
+</html>
